@@ -105,8 +105,22 @@ def load_and_analyze_results():
     y_out = np.load("predictions.npy")
     y_gt = np.load("ground_truth.npy")
     
-    # Convert logits to predicted class indices
-    y_pred = np.argmax(y_out, axis=1)
+    print("y_gt:", y_gt)
+    print("y_pred:", y_out)
+    print("Type of y_gt:", type(y_gt))
+    print("Type of y_pred:", type(y_out))
+
+    print(y_out.shape)
+    print(y_gt.shape)
+    
+    # Convert logits to probabilities (if necessary)
+    if y_out[1] > 1:  # Assuming y_out is [n_samples, n_classes]
+        y_scores = y_out[:, 1]  # Probabilities for class 1
+    else:  # Binary classification with single output
+        y_scores = y_out
+    
+    # Convert probabilities to predicted class indices
+    y_pred = (y_scores > 0.5).astype(int)
     
     # Calculate accuracy
     accuracy = accuracy_score(y_gt, y_pred)
@@ -120,7 +134,7 @@ def load_and_analyze_results():
     cm = confusion_matrix(y_gt, y_pred)
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, 
-                xticklabels=['Benign', 'Malignant'], yticklabels=['Benign', 'Malignant'])
+                xticklabels=['Class 0', 'Class 1'], yticklabels=['Class 0', 'Class 1'])
     plt.xlabel('Predicted Label')
     plt.ylabel('True Label')
     plt.title('Confusion Matrix')
@@ -130,7 +144,6 @@ def load_and_analyze_results():
     plot_prediction_histogram(y_pred, y_gt)
     
     # Plot ROC curve
-    y_scores = np.exp(y_out[:, 1])  # Probabilities for class 1
     plot_roc_curve(y_gt, y_scores)
     
     # Plot class probabilities
